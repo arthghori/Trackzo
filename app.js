@@ -87,6 +87,44 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+/* ---------------- Session management ---------------- */
+const SESSION_KEY = "trackzo_session";
+const SESSION_DAYS = 30;
+
+function saveSession(username, remember) {
+  const data = {
+    username,
+    expiresAt: remember ? Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000 : null,
+    remember: !!remember
+  };
+  if (remember) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    sessionStorage.removeItem(SESSION_KEY);
+  } else {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    localStorage.removeItem(SESSION_KEY);
+  }
+}
+
+function loadSession() {
+  let raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) raw = sessionStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  let data;
+  try { data = JSON.parse(raw); } catch { return null; }
+  if (!data || !data.username) return null;
+  if (data.expiresAt && Date.now() > data.expiresAt) {
+    clearSession();
+    return null;
+  }
+  return data;
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -213,7 +251,7 @@ document.getElementById("signup-form").addEventListener("submit", async (e) => {
       categories: CATEGORIES.slice(),
       activeGroupId: null
     });
-    sessionStorage.setItem("trackzo_user", username);
+    saveSession(username, true);
     state.username = username;
     showLoading(false);
     showToast("Account created!");
@@ -238,7 +276,8 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     if (!snap.exists()) { errEl.textContent = "No account found with that username."; showLoading(false); return; }
     const hash = await sha256(pw);
     if (snap.val().passwordHash !== hash) { errEl.textContent = "Incorrect password."; showLoading(false); return; }
-    sessionStorage.setItem("trackzo_user", username);
+    const remember = document.getElementById("login-remember").checked;
+    saveSession(username, remember);
     state.username = username;
     showLoading(false);
     await enterApp();
@@ -253,7 +292,7 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   const ok = await confirmDialog("Log out of Trackzo?");
   if (!ok) return;
   detachAllListeners();
-  sessionStorage.removeItem("trackzo_user");
+  clearSession();
   state = { ...state, username: null, mode: "personal", activeGroupCode: null, user: {}, expenses: {}, recurring: {}, notes: {}, groups: {} };
   showAuthScreen();
   document.getElementById("login-form").reset();
@@ -261,7 +300,8 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 });
 
 function goToAuthOrApp() {
-  const savedUser = sessionStorage.getItem("trackzo_user");
+  const savedSession = loadSession();
+  const savedUser = savedSession ? savedSession.username : null;
   if (savedUser) {
     state.username = savedUser;
     enterApp();

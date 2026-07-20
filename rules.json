@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "users": {
+      "$username": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "expenses": {
+      "$username": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "recurring": {
+      "$username": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "notes": {
+      "$username": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "groups": {
+      "$code": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

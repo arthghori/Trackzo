@@ -1,162 +1,65 @@
-<div align="center">
+# Trackzo Setup Guide
 
-<img src="images/icon-master.png" width="100" alt="Trackzo logo" />
+Track it. Split it. Save it.
 
-# Trackzo
-
-**Track it. Split it. Save it.**
-
-A mobile-first expense tracker PWA built with pure HTML, CSS & JavaScript powered entirely by Firebase Realtime Database. No frameworks, no build step, no external libraries.
-
-[![Made with HTML/CSS/JS](https://img.shields.io/badge/stack-HTML%20%7C%20CSS%20%7C%20JS-0F766E)](#)
-[![Firebase Realtime DB](https://img.shields.io/badge/backend-Firebase%20Realtime%20DB-F59E0B)](#)
-[![PWA Ready](https://img.shields.io/badge/PWA-installable-0F766E)](#)
-[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](#license)
-
-</div>
-
----
-
-## ✨ Features
-
-- 🔐 **Custom auth** signup/login with SHA-256 hashed passwords, stored directly in Realtime Database (no Firebase Auth)
-- 💸 **Expense tracking** add, edit, delete; category, date, note, payment method (Cash/Online)
-- 📅 **Month-wise view** with search and sort (by date or amount)
-- 🔁 **Recurring expenses** auto-added every month
-- 📊 **Budgets** total + category-wise, with live "money left" calculation and color-coded progress bars
-- 📈 **Charts** category breakdown & monthly trend, hand-drawn on `<canvas>` (zero chart libraries)
-- 👥 **Shared groups** create/join via a 6-digit code, add shared expenses, auto "who owes whom" settle-up, activity log
-- 📝 **Notes** standalone or attached to expenses, month-wise, searchable, editable
-- 📤 **Export** CSV and PDF (print-to-PDF), shareable via the native Share sheet
-- 🌗 **Dark mode**
-- 📱 **Installable PWA** add to home screen on Android/iOS
-- ✅ Empty states, confirmation dialogs, toasts, and loading indicators throughout
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Tech |
-|---|---|
-| Frontend | Vanilla HTML, CSS, JavaScript (no frameworks) |
-| Backend | Firebase Realtime Database (only) |
-| Auth | Custom SHA-256 via Web Crypto API |
-| Charts | Hand-rolled `<canvas>` rendering |
-| Sharing | Web Share API |
-| Installability | Web App Manifest (`manifest.json`) |
-
-No npm, no bundler, no build step required.
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repo
-```bash
-git clone https://github.com/<your-username>/trackzo.git
-cd trackzo
+## What's in this folder
+```
+index.html          Main app (all screens)
+style.css            Styling (light + dark theme, teal/amber branding)
+app.js                All app logic
+firebase-config.js   ⚠️ Add your Firebase credentials here
+manifest.json        Makes the app installable on your phone
+rules.json            Starter Firebase Realtime Database rules
+images/               All app icons & illustrations
+README.md            This file
 ```
 
-### 2. Set up Firebase
-1. Create a project at [Firebase Console](https://console.firebase.google.com)
-2. Register a **Web App** (`</>` icon) and copy the config object
-3. Paste your config into [`firebase-config.js`](./firebase-config.js)
-4. Go to **Build → Realtime Database → Create Database** (start in test mode)
-5. Open the **Rules** tab and paste in [`rules.json`](./rules.json), then publish
+## 1. Set up Firebase (5 minutes)
+1. Go to https://console.firebase.google.com and create a new project.
+2. Inside the project, click the **</>** (Web) icon to register a web app.
+3. Copy the `firebaseConfig` object it gives you.
+4. Open `firebase-config.js` in this folder and paste your values in place of the `YOUR_...` placeholders.
+5. In the Firebase console, go to **Build → Realtime Database → Create Database**. Start in test mode for now.
+6. Once created, go to the **Rules** tab and paste in the contents of `rules.json`, then click **Publish**.
 
-> ⚠️ Since this app uses custom auth (not Firebase Auth), database rules are intentionally left open (`read/write: true`) so requests work without an auth token. Passwords are hashed before storage, but this setup is best suited for personal/demo use not a public multi-tenant launch. See the Security section below.
+> ⚠️ **Security note:** Because this app uses a custom username/password system (not Firebase Auth), the Realtime Database rules in `rules.json` are intentionally open (`.read`/`.write: true`) so the app works without a real auth token. This is fine for personal use or a demo, but **anyone with your database URL could read/write your data**. Passwords are hashed (SHA-256) before storage, but for a production/public launch you should migrate to real Firebase Authentication with per-user security rules.
 
-### 3. Run locally
-Pick one:
+## 2. Run the app
+Since it's plain HTML/CSS/JS, you just need to serve the folder you can't open `index.html` directly via `file://` because Firebase and Web Share API need `http(s)://`.
 
-```bash
-# Option A Python
-python3 -m http.server 8000
-# then visit http://localhost:8000
-
-# Option B VS Code
-# Install the "Live Server" extension → right-click index.html → "Open with Live Server"
-
-# Option C Firebase Hosting (get a real shareable URL)
-npm install -g firebase-tools
-firebase login
-firebase init hosting   # point it at this folder
-firebase deploy
-```
-
-> Must be served over `http://` or `https://` opening `index.html` directly via `file://` will break Firebase and the Web Share API.
-
-### 4. Install on your phone
-Once deployed to a URL:
-- **Android (Chrome)** → ⋮ menu → "Add to Home screen"
-- **iPhone (Safari)** → Share button → "Add to Home Screen"
-
----
-
-## 📁 Project Structure
-
-```
-trackzo/
-├── index.html          # All app screens (SPA)
-├── style.css            # Styling light/dark theme, teal/amber branding
-├── app.js                # All app logic (auth, expenses, budgets, groups, charts...)
-├── firebase-config.js   # Firebase project credentials (edit this)
-├── manifest.json        # PWA manifest
-├── rules.json            # Starter Firebase Realtime DB security rules
-├── images/               # Icons & illustrations
-└── README.md
-```
-
----
-
-## 🔒 Security Notes
-
-- Passwords are hashed client-side with **SHA-256** before being written to the database never stored in plain text.
-- Because there's no Firebase Auth, Realtime Database rules can't scope reads/writes to a verified identity, so `rules.json` ships open by default.
-- **For production or public use**, consider migrating to Firebase Authentication with per-user rules like:
-  ```json
-  ".read": "auth != null && auth.uid === $uid"
+**Easiest options:**
+- **VS Code**: install the "Live Server" extension, right-click `index.html` → "Open with Live Server"
+- **Python**: run `python3 -m http.server 8000` in this folder, then visit `http://localhost:8000`
+- **Firebase Hosting** (free, gives you a real URL to install on your phone):
   ```
-- Session state is kept in `sessionStorage` (cleared when the tab closes), not `localStorage`.
+  npm install -g firebase-tools
+  firebase login
+  firebase init hosting   (point it at this folder)
+  firebase deploy
+  ```
 
----
+## 3. Install on your phone
+Once the app is live on a URL (e.g. via Firebase Hosting or any static host):
+- **Android (Chrome)**: open the URL → menu (⋮) → "Add to Home screen"
+- **iPhone (Safari)**: open the URL → Share button → "Add to Home Screen"
 
-## 🗺️ Data Model
+## Features included
+- Custom login/signup (SHA-256 hashed passwords, stored in Realtime DB)
+- Add/edit/delete expenses amount, category, date, note, payment method (Cash/Online)
+- Month-wise view, search, sort by date/amount
+- Recurring monthly expenses (auto-added each month)
+- Total + category-wise budgets with live "money left" calculation
+- Category & monthly trend charts (hand-drawn on `<canvas>`, no libraries)
+- Shared groups via 6-digit join code add/edit/delete shared expenses, leave group
+- Split calculator automatic "who owes whom" settle-up
+- Group activity log
+- Standalone notes + notes on expenses, month-wise, searchable, editable
+- Export month as CSV or PDF (print-to-PDF)
+- Share expenses, notes, budget summaries, and group codes via the native Share sheet
+- Dark mode, ₹ (INR) only
+- Onboarding intro (first-time only), confirmation dialogs, toasts, loading states, empty states
+- Installable as a home-screen app (manifest.json)
 
-```
-/users/{username}
-    passwordHash, createdAt, totalBudget, categoryBudgets, activeGroupId
-
-/expenses/{username}/{expenseId}
-    amount, category, date, note, paymentMethod, timestamp
-
-/recurring/{username}/{recurringId}
-    amount, category, note, paymentMethod, dayOfMonth
-
-/notes/{username}/{noteId}
-    title, text, timestamp
-
-/groups/{6digitCode}
-    ownerUsername, name, createdAt
-    members/{username}: true
-    expenses/{expenseId}: { amount, category, date, note, paymentMethod, timestamp, addedBy, splitBetween }
-    activity/{logId}: { username, action, details, timestamp }
-```
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
-
----
-
-## 📄 License
-
-MIT free to use, modify, and distribute.
-
----
-
-<div align="center">
-Made with 💛 and ₹ Trackzo
-</div>
+## Notes
+- All amounts are in ₹ (INR) only, hardcoded.
+- No external libraries are used anywhere auth hashing uses the browser's built-in Web Crypto API, charts are drawn on `<canvas>` manually, and sharing uses the native Web Share API.
