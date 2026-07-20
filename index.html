@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>Trackzo Track it. Split it. Save it.</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="images/favicon-32.png" />
+<link rel="apple-touch-icon" href="images/icon-180.png" />
+<meta name="theme-color" content="#0F766E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ======================= APP ROOT ======================= -->
+<div id="app">
+
+  <!-- ---------- Toast ---------- -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ---------- Global Loading Overlay ---------- -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ---------- Confirm Dialog ---------- -->
+  <div id="confirm-dialog" class="modal-backdrop hidden">
+    <div class="modal">
+      <p id="confirm-message">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="btn btn-ghost">Cancel</button>
+        <button id="confirm-ok" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ONBOARDING ================= -->
+  <section id="screen-onboarding" class="screen">
+    <div class="onboard-slides" id="onboard-slides">
+      <div class="onboard-slide active" data-slide="0">
+        <img src="images/onboard-1.png" alt="Track expenses" />
+        <h2>Track every rupee</h2>
+        <p>Log expenses in seconds, sort them by category and see exactly where your money goes.</p>
+      </div>
+      <div class="onboard-slide" data-slide="1">
+        <img src="images/onboard-2.png" alt="Split with groups" />
+        <h2>Split with your group</h2>
+        <p>Create a group, share the 6-digit code, and settle up who owes whom automatically.</p>
+      </div>
+      <div class="onboard-slide" data-slide="2">
+        <img src="images/onboard-3.png" alt="Notes and sharing" />
+        <h2>Notes & sharing</h2>
+        <p>Jot down money notes and share anything straight to WhatsApp or any app you like.</p>
+      </div>
+    </div>
+    <div class="onboard-dots" id="onboard-dots">
+      <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="onboard-actions">
+      <button id="onboard-skip" class="btn btn-ghost">Skip</button>
+      <button id="onboard-next" class="btn btn-primary">Next</button>
+    </div>
+  </section>
+
+  <!-- ================= AUTH ================= -->
+  <section id="screen-auth" class="screen">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-hero">
+          <div class="auth-badge">💸</div>
+          <div>
+            <h1 class="brand-title">Trackzo</h1>
+            <p class="brand-tagline">Track it. Split it. Save it.</p>
+          </div>
+        </div>
+
+        <img class="auth-graphic" src="images/login-graphic.png" alt="Secure login" />
+        <p class="auth-intro">Manage expenses, split bills, and stay on top of your budget in one simple place.</p>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Log In</button>
+          <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+
+        <form id="login-form" class="auth-form">
+          <label class="auth-field">
+            <span>Username</span>
+            <input type="text" id="login-username" autocomplete="username" required />
+          </label>
+          <label class="auth-field">
+            <span>Password</span>
+            <input type="password" id="login-password" autocomplete="current-password" required />
+          </label>
+          <p class="field-error" id="login-error"></p>
+          <button type="submit" class="btn btn-primary btn-block">Log In</button>
+        </form>
+
+        <form id="signup-form" class="auth-form hidden">
+          <label class="auth-field">
+            <span>Choose a username</span>
+            <input type="text" id="signup-username" autocomplete="username" required />
+          </label>
+          <label class="auth-field">
+            <span>Choose a password</span>
+            <input type="password" id="signup-password" autocomplete="new-password" required />
+          </label>
+          <label class="auth-field">
+            <span>Confirm password</span>
+            <input type="password" id="signup-password2" autocomplete="new-password" required />
+          </label>
+          <p class="field-error" id="signup-error"></p>
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN APP (post-login) ================= -->
+  <div id="main-app" class="hidden">
+
+    <!-- ---------- Top bar ---------- -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-logo">Trackzo</span>
+        <span id="tracker-toggle" class="tracker-toggle">
+          <button class="tt-btn active" data-mode="personal">Personal</button>
+          <button class="tt-btn" data-mode="group">Group</button>
+        </span>
+      </div>
+      <button id="share-summary-btn" class="icon-btn" title="Share">⇪</button>
+    </header>
+
+    <!-- ================= HOME ================= -->
+    <section id="screen-home" class="screen app-screen active">
+      <div class="month-row">
+        <select id="home-month"></select>
+        <input type="text" id="home-search" placeholder="Search expenses…" />
+        <select id="home-sort">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="amt-desc">Amount: high-low</option>
+          <option value="amt-asc">Amount: low-high</option>
+        </select>
+      </div>
+
+      <div class="budget-card">
+        <div class="budget-row">
+          <span>Budget</span><span id="budget-total">₹0</span>
+        </div>
+        <div class="budget-row">
+          <span>Spent</span><span id="budget-spent">₹0</span>
+        </div>
+        <div class="progress-track">
+          <div id="budget-progress-fill" class="progress-fill"></div>
+        </div>
+        <div class="budget-row budget-left-row">
+          <span>Left</span><span id="budget-left">₹0</span>
+        </div>
+      </div>
+
+      <h3 class="section-heading">Expenses</h3>
+      <div id="expense-list" class="list"></div>
+      <div id="home-empty" class="empty-state hidden">
+        <img src="images/empty-expenses.png" alt="No expenses" />
+        <p>No expenses yet tap + to add your first one.</p>
+      </div>
+    </section>
+
+    <!-- ================= ADD EXPENSE ================= -->
+    <section id="screen-add" class="screen app-screen">
+      <h2 class="screen-title" id="add-title">Add Expense</h2>
+      <form id="expense-form" class="stack-form">
+        <label>Amount (₹)
+          <input type="number" id="exp-amount" min="0" step="0.01" required />
+        </label>
+        <label>Category
+          <select id="exp-category">
+            <option>Food</option>
+            <option>Transport</option>
+            <option>Shopping</option>
+            <option>Bills</option>
+            <option>Health</option>
+            <option>Entertainment</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Date
+          <input type="date" id="exp-date" required />
+        </label>
+        <label>Note (optional)
+          <input type="text" id="exp-note" placeholder="e.g. Lunch with team" />
+        </label>
+        <label>Payment method
+          <select id="exp-payment">
+            <option>Cash</option>
+            <option>Online</option>
+          </select>
+        </label>
+        <label class="checkbox-row" id="split-row">
+          <input type="checkbox" id="exp-recurring" />
+          Make this recurring (monthly)
+        </label>
+        <div id="split-members" class="split-members hidden"></div>
+        <p class="field-error" id="exp-error"></p>
+        <button type="submit" class="btn btn-primary btn-block" id="exp-submit-btn">Save Expense</button>
+      </form>
+    </section>
+
+    <!-- ================= CHARTS ================= -->
+    <section id="screen-charts" class="screen app-screen">
+      <h2 class="screen-title">Charts</h2>
+      <div class="month-row">
+        <select id="chart-month"></select>
+        <select id="chart-payment">
+          <option value="all">All payments</option>
+          <option value="Cash">Cash</option>
+          <option value="Online">Online</option>
+        </select>
+      </div>
+      <div id="charts-content">
+        <h3 class="section-heading">By category</h3>
+        <canvas id="category-chart" width="340" height="220"></canvas>
+        <h3 class="section-heading">Monthly trend</h3>
+        <canvas id="trend-chart" width="340" height="220"></canvas>
+      </div>
+      <div id="charts-empty" class="empty-state hidden">
+        <img src="images/empty-charts.png" alt="No chart data" />
+        <p>Nothing to chart yet for this month.</p>
+      </div>
+    </section>
+
+    <!-- ================= NOTES ================= -->
+    <section id="screen-notes" class="screen app-screen">
+      <h2 class="screen-title">Notes</h2>
+      <div class="month-row">
+        <select id="notes-month"></select>
+        <input type="text" id="notes-search" placeholder="Search notes…" />
+      </div>
+      <button id="notes-add-btn" class="btn btn-primary btn-block">+ New Note</button>
+      <div id="notes-list" class="list"></div>
+      <div id="notes-empty" class="empty-state hidden">
+        <img src="images/empty-notes.png" alt="No notes" />
+        <p>No notes yet tap + New Note to add your first one.</p>
+      </div>
+    </section>
+
+    <section id="screen-note-edit" class="screen app-screen">
+      <h2 class="screen-title" id="note-edit-title">New Note</h2>
+      <form id="note-form" class="stack-form">
+        <label>Title
+          <input type="text" id="note-title" required />
+        </label>
+        <label>Note
+          <textarea id="note-text" rows="6" required></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Save Note</button>
+      </form>
+    </section>
+
+    <!-- ================= GROUPS ================= -->
+    <section id="screen-groups" class="screen app-screen">
+      <h2 class="screen-title">Groups</h2>
+
+      <div id="no-group-view">
+        <div class="card">
+          <h3 class="section-heading">Create a group</h3>
+          <input type="text" id="new-group-name" placeholder="Group name (e.g. Goa Trip)" />
+          <button id="create-group-btn" class="btn btn-primary btn-block">Create Group</button>
+        </div>
+        <div class="card">
+          <h3 class="section-heading">Join a group</h3>
+          <input type="text" id="join-group-code" maxlength="6" placeholder="Enter 6-digit code" />
+          <p class="field-error" id="join-group-error"></p>
+          <button id="join-group-btn" class="btn btn-primary btn-block">Join Group</button>
+        </div>
+        <div class="empty-state">
+          <img src="images/empty-groups.png" alt="No groups" />
+          <p>No group yet create or join one to split expenses.</p>
+        </div>
+      </div>
+
+      <div id="active-group-view" class="hidden">
+        <div class="card group-info-card">
+          <div class="group-info-row">
+            <div>
+              <strong id="group-name-label">—</strong>
+              <div class="group-code-row">Code: <span id="group-code-label">------</span>
+                <button id="share-group-code-btn" class="icon-btn small">⇪</button>
+              </div>
+            </div>
+            <button id="leave-group-btn" class="btn btn-ghost btn-sm">Leave</button>
+          </div>
+          <div id="group-members-list" class="members-list"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-heading">Settle up who owes whom</h3>
+          <div id="settle-up-list"></div>
+        </div>
+
+        <h3 class="section-heading">Recent activity</h3>
+        <div id="group-activity-list" class="list"></div>
+      </div>
+    </section>
+
+    <!-- ================= SETTINGS ================= -->
+    <section id="screen-settings" class="screen app-screen">
+      <h2 class="screen-title">Settings</h2>
+
+      <div class="card">
+        <h3 class="section-heading">Budget</h3>
+        <label>Total monthly budget (₹)
+          <input type="number" id="set-total-budget" min="0" />
+        </label>
+        <div id="category-budget-inputs"></div>
+        <button id="save-budget-btn" class="btn btn-primary btn-block">Save Budget</button>
+      </div>
+
+      <div class="card">
+        <h3 class="section-heading">Categories</h3>
+        <div class="category-manager-add">
+          <input type="text" id="new-category-name" placeholder="New category" />
+          <button id="add-category-btn" class="btn btn-primary btn-sm">Add</button>
+        </div>
+        <div id="category-list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-heading">Recurring expenses</h3>
+        <div id="recurring-list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-heading">Export</h3>
+        <button id="export-csv-btn" class="btn btn-secondary btn-block">Export month as CSV</button>
+        <button id="export-pdf-btn" class="btn btn-secondary btn-block">Export month as PDF</button>
+      </div>
+
+      <div class="card">
+        <div class="row-between">
+          <span>Dark mode</span>
+          <label class="switch">
+            <input type="checkbox" id="dark-mode-toggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <button id="logout-btn" class="btn btn-danger btn-block">Log Out</button>
+    </section>
+
+    <!-- ---------- Bottom Nav ---------- -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="home"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-btn" data-screen="add"><span class="nav-icon">➕</span>Add</button>
+      <button class="nav-btn" data-screen="charts"><span class="nav-icon">📊</span>Charts</button>
+      <button class="nav-btn" data-screen="notes"><span class="nav-icon">📝</span>Notes</button>
+      <button class="nav-btn" data-screen="groups"><span class="nav-icon">👥</span>Groups</button>
+      <button class="nav-btn" data-screen="settings"><span class="nav-icon">⚙️</span>Settings</button>
+    </nav>
+  </div>
+
+</div>
+
+<!-- Firebase SDK (compat, script tags only) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
